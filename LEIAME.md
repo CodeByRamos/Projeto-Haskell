@@ -3,6 +3,9 @@
 Diário digital de plantas com CRUD completo, agenda de rega inteligente e
 acompanhamento de crescimento — feito em **Haskell**.
 
+> 📈 **Modelo de negócio, estratégia e roadmap:** veja
+> [MODELO_DE_NEGOCIO.md](MODELO_DE_NEGOCIO.md).
+
 ## Rodar localmente
 
 Pré-requisito: [Stack](https://docs.haskellstack.org/) instalado.
