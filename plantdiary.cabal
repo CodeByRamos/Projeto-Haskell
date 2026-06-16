@@ -6,7 +6,7 @@ build-type:    Simple
 executable plantdiary
   main-is:          Main.hs
   hs-source-dirs:   app src
-  other-modules:    Models Routes Views
+  other-modules:    Models Routes Views Auth
   ghc-options:      -Wall -Wno-unused-imports
   default-language: Haskell2010
 
@@ -26,3 +26,6 @@ executable plantdiary
     , monad-logger
     , resourcet
     , wai
+    , crypton
+    , cookie
+    , memory

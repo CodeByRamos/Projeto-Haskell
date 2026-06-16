@@ -1,5 +1,14 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+-- | Views (o "chef que monta o prato bonito").
+--
+-- Aqui transformamos os dados em páginas HTML. Usamos a biblioteca Lucid: cada
+-- função como @div_@, @p_@, @h1_@ representa uma tag HTML, e o texto entre
+-- aspas vira o conteúdo. As classes (@class_ "..."@) são do Tailwind CSS, que
+-- cuida das cores, espaçamentos e responsividade.
+--
+-- O ponto de entrada é 'renderPage' (páginas do app, com a barra de navegação)
+-- e 'renderAuthPage' (telas de login/cadastro, sem a barra).
 module Views where
 
 import Data.Int             (Int64)
@@ -18,26 +27,25 @@ import Models
 
 -- ─── Entry point ────────────────────────────────────────────────────────────
 
-renderPage :: Html () -> TL.Text
-renderPage = renderText . layout
+renderPage :: Maybe (Entity User) -> Html () -> TL.Text
+renderPage mUser = renderText . layout mUser
 
-layout :: Html () -> Html ()
-layout content = do
+layout :: Maybe (Entity User) -> Html () -> Html ()
+layout mUser content = do
   doctype_
   html_ [lang_ "pt-BR"] $ do
     head_ pageHead
-    body_ [class_ "relative min-h-screen flex flex-col text-stone-800 antialiased bg-stone-50"] $ do
+    body_ [class_ "relative min-h-screen flex flex-col text-[#3D3A33] antialiased"] $ do
       decorativeBackground
-      siteNav
+      siteNav mUser
       main_ [class_ "relative flex-1 w-full max-w-6xl mx-auto px-4 sm:px-6 py-8 sm:py-10"] content
       siteFooter
 
 decorativeBackground :: Html ()
 decorativeBackground =
   div_ [class_ "fixed inset-0 -z-10 overflow-hidden pointer-events-none"] $ do
-    div_ [class_ "absolute -top-24 -left-24 w-[28rem] h-[28rem] rounded-full bg-emerald-200/50 blur-3xl"] emptyHtml
-    div_ [class_ "absolute top-1/4 -right-32 w-[26rem] h-[26rem] rounded-full bg-sky-200/40 blur-3xl"] emptyHtml
-    div_ [class_ "absolute bottom-0 left-1/3 w-[24rem] h-[24rem] rounded-full bg-amber-100/40 blur-3xl"] emptyHtml
+    div_ [class_ "absolute -top-32 -left-24 w-[30rem] h-[30rem] rounded-full bg-emerald-900/5 blur-3xl"] emptyHtml
+    div_ [class_ "absolute bottom-0 right-0 w-[26rem] h-[26rem] rounded-full bg-[#B98A2E]/5 blur-3xl"] emptyHtml
 
 -- ─── <head> ─────────────────────────────────────────────────────────────────
 
@@ -47,7 +55,7 @@ pageHead = do
   meta_ [name_ "viewport", content_ "width=device-width, initial-scale=1.0"]
   title_ "PlantDiary"
   link_ [ rel_ "stylesheet"
-        , href_ "https://fonts.googleapis.com/css2?family=Playfair+Display:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap"
+        , href_ "https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600;700&display=swap"
         ]
   link_ [ rel_ "stylesheet"
         , href_ "https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.47.0/tabler-icons.min.css"
@@ -60,23 +68,26 @@ emptyHtml = ""
 
 appStyles :: Text
 appStyles = T.unlines
-  [ "body { font-family: 'Inter', sans-serif; }"
-  , ".font-serif { font-family: 'Playfair Display', serif; }"
+  [ "body { font-family: 'Inter', sans-serif; background-color: #FBF9F4;"
+  , "  background-image: linear-gradient(rgba(20,54,31,.025) 1px, transparent 1px), linear-gradient(90deg, rgba(20,54,31,.025) 1px, transparent 1px);"
+  , "  background-size: 34px 34px; }"
+  , ".font-serif { font-family: 'Fraunces', serif; font-optical-sizing: auto; letter-spacing: -0.01em; }"
   , "* { -webkit-tap-highlight-color: transparent; }"
   , ".card { transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }"
-  , ".card:hover { transform: translateY(-3px); box-shadow: 0 14px 32px rgba(15,23,15,.10); border-color: #a7d8b8; }"
+  , ".card:hover { transform: translateY(-3px); box-shadow: 0 16px 36px rgba(20,54,31,.12); border-color: #B98A2E66; }"
   , ".btn { transition: background-color .15s ease, opacity .15s ease, transform .1s ease, box-shadow .15s ease; }"
   , ".btn:active { transform: scale(0.97); }"
   , ".link-fade { transition: color .15s ease; }"
+  , ".gold-thread { height: 1px; background: linear-gradient(to right, transparent, rgba(185,138,46,.55), transparent); }"
   , "input, select, textarea { outline: none; transition: border-color .15s ease, box-shadow .15s ease; }"
-  , "input:focus, select:focus, textarea:focus { border-color: #047857 !important; box-shadow: 0 0 0 3px rgba(4,120,87,.12); }"
-  , "::selection { background: #d1fae5; }"
+  , "input:focus, select:focus, textarea:focus { border-color: #1E5B38 !important; box-shadow: 0 0 0 3px rgba(185,138,46,.18); }"
+  , "::selection { background: #F0E6CE; }"
   , "@keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }"
-  , ".fade-up { animation: fadeUp .35s ease both; }"
+  , ".fade-up { animation: fadeUp .4s ease both; }"
   , ".icon-circle { display: inline-flex; align-items: center; justify-content: center; border-radius: 9999px; flex-shrink: 0; }"
   , ".toggle-box { transition: all .15s ease; }"
-  , ".toggle-input:checked + .toggle-box { background: #059669; color: #fff; border-color: #059669; box-shadow: 0 6px 16px rgba(5,150,105,.3); }"
-  , ".toggle-input:focus-visible + .toggle-box { box-shadow: 0 0 0 3px rgba(5,150,105,.3); }"
+  , ".toggle-input:checked + .toggle-box { background: #14361F; color: #FBF9F4; border-color: #14361F; box-shadow: 0 6px 16px rgba(20,54,31,.28); }"
+  , ".toggle-input:focus-visible + .toggle-box { box-shadow: 0 0 0 3px rgba(185,138,46,.3); }"
   ]
 
 -- ─── Small helpers ──────────────────────────────────────────────────────────
@@ -90,32 +101,223 @@ iconSz name extraCls = i_ [class_ $ "ti " <> name <> " " <> extraCls] emptyHtml
 checkedAttr :: Attribute
 checkedAttr = makeAttribute "checked" "checked"
 
+requiredAttr :: Attribute
+requiredAttr = makeAttribute "required" "required"
+
+autofocusAttr :: Attribute
+autofocusAttr = makeAttribute "autofocus" "autofocus"
+
+minlenAttr :: Text -> Attribute
+minlenAttr = makeAttribute "minlength"
+
 -- ─── Nav & Footer ───────────────────────────────────────────────────────────
 
-siteNav :: Html ()
-siteNav =
-  nav_ [class_ "relative bg-stone-900 text-stone-100 sticky top-0 z-50"] $ do
-    div_ [class_ "h-[3px] bg-gradient-to-r from-emerald-500 via-sky-400 to-amber-400"] emptyHtml
+siteNav :: Maybe (Entity User) -> Html ()
+siteNav mUser =
+  nav_ [class_ "relative bg-[#14361F] text-[#FBF9F4] sticky top-0 z-50 border-b border-[#B98A2E]/30"] $ do
     div_ [class_ "max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between h-16"] $ do
-      a_ [href_ "/", class_ "flex items-center gap-2.5 text-base sm:text-lg font-serif font-semibold link-fade hover:text-emerald-400"] $ do
-        iconSz "ti-leaf" "text-xl text-emerald-400"
+      a_ [href_ "/", class_ "flex items-center gap-2.5 text-base sm:text-lg font-serif font-semibold link-fade hover:text-[#E7C77A]"] $ do
+        iconSz "ti-leaf" "text-xl text-[#B98A2E]"
         span_ "PlantDiary"
-      div_ [class_ "flex items-center gap-3 sm:gap-7 text-sm font-medium"] $ do
-        a_ [href_ "/", class_ "hidden sm:inline link-fade hover:text-emerald-400 text-stone-300"] "Início"
-        a_ [href_ "/plantas", class_ "hidden sm:inline link-fade hover:text-emerald-400 text-stone-300"] "Minhas Plantas"
-        a_ [href_ "/estatisticas", class_ "hidden sm:inline link-fade hover:text-emerald-400 text-stone-300"] "Estatísticas"
-        a_ [ href_ "/plantas/nova"
-           , class_ "flex items-center gap-1.5 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white btn px-3.5 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap shadow-sm"
-           ] $ do
-             iconSz "ti-plus" "text-base"
-             span_ "Nova Planta"
+      case mUser of
+        Just (Entity _ u) ->
+          div_ [class_ "flex items-center gap-3 sm:gap-6 text-sm font-medium"] $ do
+            a_ [href_ "/", class_ "hidden sm:inline link-fade text-[#FBF9F4]/70 hover:text-[#FBF9F4]"] "Início"
+            a_ [href_ "/plantas", class_ "hidden sm:inline link-fade text-[#FBF9F4]/70 hover:text-[#FBF9F4]"] "Minhas Plantas"
+            a_ [href_ "/estatisticas", class_ "hidden sm:inline link-fade text-[#FBF9F4]/70 hover:text-[#FBF9F4]"] "Estatísticas"
+            a_ [ href_ "/plantas/nova"
+               , class_ "flex items-center gap-1.5 border border-[#FBF9F4]/25 hover:bg-[#FBF9F4]/10 text-[#FBF9F4] btn px-3.5 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap"
+               ] $ do
+                 iconSz "ti-plus" "text-base"
+                 span_ "Nova Planta"
+            div_ [class_ "flex items-center gap-2.5 pl-1 sm:pl-4 sm:border-l border-[#FBF9F4]/15"] $ do
+              div_ [class_ "icon-circle w-8 h-8 bg-[#B98A2E]/20 text-[#E7C77A] text-xs font-serif font-semibold"] $
+                toHtml (userInitials u)
+              span_ [class_ "hidden sm:inline text-[#FBF9F4]/80 text-sm max-w-[8rem] truncate"] $
+                toHtml (userName u)
+              form_ [action_ "/logout", method_ "post", class_ "flex"] $
+                button_ [type_ "submit", class_ "btn text-[#FBF9F4]/50 hover:text-[#FBF9F4]", title_ "Sair"] $
+                  iconSz "ti-logout" "text-lg"
+        Nothing ->
+          div_ [class_ "flex items-center gap-3 sm:gap-5 text-sm font-medium"] $ do
+            a_ [href_ "/login", class_ "link-fade text-[#FBF9F4]/70 hover:text-[#FBF9F4]"] "Entrar"
+            a_ [ href_ "/cadastro"
+               , class_ "bg-[#B98A2E] hover:bg-[#A2761F] text-[#14361F] btn px-4 py-2 rounded-lg font-semibold text-xs sm:text-sm whitespace-nowrap shadow-sm"
+               ] "Criar conta"
+
+userInitials :: User -> Text
+userInitials u =
+  let parts = filter (not . T.null) (T.words (userName u))
+  in case parts of
+       []      -> "?"
+       [a]     -> T.toUpper (T.take 1 a)
+       (a:b:_) -> T.toUpper (T.take 1 a) <> T.toUpper (T.take 1 b)
 
 siteFooter :: Html ()
 siteFooter =
-  footer_ [class_ "relative bg-stone-900 text-stone-500 text-center py-6 text-xs sm:text-sm mt-12"] $
+  footer_ [class_ "relative bg-[#14361F] text-[#FBF9F4]/55 text-center py-6 text-xs sm:text-sm mt-12 border-t border-[#B98A2E]/30"] $
     p_ [class_ "flex items-center justify-center gap-1.5"] $ do
-      iconSz "ti-leaf" "text-emerald-500"
+      iconSz "ti-leaf" "text-[#B98A2E]"
       span_ "PlantDiary — cuide das suas plantas com carinho"
+
+-- ─── Autenticação (login / cadastro) ──────────────────────────────────────────
+
+renderAuthPage :: Html () -> TL.Text
+renderAuthPage = renderText . authLayout
+
+authLayout :: Html () -> Html ()
+authLayout content = do
+  doctype_
+  html_ [lang_ "pt-BR"] $ do
+    head_ pageHead
+    body_ [class_ "antialiased text-[#3D3A33]", style_ "background-color:#FBF9F4;"] content
+
+-- SVG botânico decorativo (sem imagens externas).
+botanicalArt :: Html ()
+botanicalArt = div_ [class_ "absolute inset-0 pointer-events-none"] $ toHtmlRaw botanicalSvg
+
+botanicalSvg :: Text
+botanicalSvg = T.concat
+  [ "<svg viewBox='0 0 400 600' preserveAspectRatio='xMidYMid slice' xmlns='http://www.w3.org/2000/svg' style='width:100%;height:100%'>"
+  , "<g fill='none' stroke='#FBF9F4' stroke-opacity='0.12' stroke-width='1.5'>"
+  , "<path d='M60 600 C60 460 60 360 120 280 C150 240 150 180 130 120'/>"
+  , "<path d='M120 300 C60 290 30 250 20 200 M120 300 C180 300 215 270 230 225'/>"
+  , "<path d='M120 380 C60 372 35 338 25 300 M120 380 C180 372 205 345 220 308'/>"
+  , "<path d='M120 460 C70 452 45 420 38 388 M120 460 C172 452 196 428 210 398'/>"
+  , "</g>"
+  , "<g fill='none' stroke='#B98A2E' stroke-opacity='0.18' stroke-width='1.5'>"
+  , "<path d='M330 0 C300 70 300 130 340 180 C360 205 370 250 360 300'/>"
+  , "<path d='M340 90 C300 86 280 60 274 28 M340 90 C384 86 405 64 414 30'/>"
+  , "<ellipse cx='300' cy='420' rx='46' ry='80' transform='rotate(28 300 420)'/>"
+  , "<path d='M300 350 L300 490' transform='rotate(28 300 420)'/>"
+  , "</g>"
+  , "</svg>"
+  ]
+
+-- Painel ilustrado lateral (escondido no mobile).
+authSidePanel :: Html ()
+authSidePanel =
+  div_ [class_ "hidden lg:flex relative bg-[#14361F] text-[#FBF9F4] p-12 flex-col justify-between overflow-hidden"] $ do
+    botanicalArt
+    -- cantos de moldura dourados
+    div_ [class_ "absolute top-6 left-6 w-8 h-8 border-t border-l border-[#B98A2E]/50"] emptyHtml
+    div_ [class_ "absolute bottom-6 right-6 w-8 h-8 border-b border-r border-[#B98A2E]/50"] emptyHtml
+    a_ [href_ "/", class_ "relative flex items-center gap-2.5 text-lg font-serif font-semibold"] $ do
+      iconSz "ti-leaf" "text-xl text-[#B98A2E]"
+      span_ "PlantDiary"
+    div_ [class_ "relative"] $ do
+      p_ [class_ "flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] font-semibold text-[#E7C77A] mb-4"] $ do
+        span_ "——"
+        span_ "Seu jardim, organizado"
+      h2_ [class_ "font-serif text-4xl font-semibold leading-[1.1] mb-4 text-[#FBF9F4]"] "Cada planta merece um diário."
+      p_ [class_ "text-[#FBF9F4]/70 leading-relaxed max-w-sm"] "Acompanhe regas, crescimento e cuidados — e veja seu jardim prosperar ao longo do tempo."
+    div_ [class_ "relative grid grid-cols-3 gap-4 pt-6 border-t border-[#FBF9F4]/10"] $ do
+      authStat "Regas" "no ponto certo"
+      authStat "Vitalidade" "que cresce"
+      authStat "Histórico" "completo"
+
+authStat :: Text -> Text -> Html ()
+authStat title sub = div_ $ do
+  p_ [class_ "font-serif text-base text-[#E7C77A]"] $ toHtml title
+  p_ [class_ "text-[#FBF9F4]/55 text-xs"] $ toHtml sub
+
+loginView :: Maybe Text -> Html ()
+loginView mErr =
+  div_ [class_ "min-h-screen grid lg:grid-cols-2"] $ do
+    authSidePanel
+    div_ [class_ "flex items-center justify-center px-6 py-12 sm:px-12"] $
+      div_ [class_ "w-full max-w-sm fade-up"] $ do
+        authMobileLogo
+        authKicker "Bem-vindo de volta"
+        h1_ [class_ "font-serif text-3xl font-semibold text-[#14361F] mb-1.5"] "Entrar na sua estufa"
+        p_ [class_ "text-[#7A746A] text-sm mb-6"] "Acesse seu diário de plantas."
+        maybe (pure ()) authError mErr
+        form_ [action_ "/login", method_ "post", class_ "space-y-4"] $ do
+          authField "E-mail" "ti-mail" $
+            input_ [type_ "email", name_ "email", requiredAttr, autofocusAttr,
+                    class_ authInputCls, placeholder_ "voce@email.com"]
+          authField "Senha" "ti-lock" $
+            input_ [type_ "password", name_ "password", requiredAttr,
+                    class_ authInputCls, placeholder_ "Sua senha"]
+          authSubmit "Entrar"
+        authTrust
+        authSwap "Ainda não tem conta?" "Criar agora" "/cadastro"
+
+signupView :: Maybe Text -> Html ()
+signupView mErr =
+  div_ [class_ "min-h-screen grid lg:grid-cols-2"] $ do
+    authSidePanel
+    div_ [class_ "flex items-center justify-center px-6 py-12 sm:px-12"] $
+      div_ [class_ "w-full max-w-sm fade-up"] $ do
+        authMobileLogo
+        authKicker "Comece agora"
+        h1_ [class_ "font-serif text-3xl font-semibold text-[#14361F] mb-1.5"] "Criar sua conta"
+        p_ [class_ "text-[#7A746A] text-sm mb-6"] "Leva menos de um minuto."
+        maybe (pure ()) authError mErr
+        form_ [action_ "/cadastro", method_ "post", class_ "space-y-4"] $ do
+          authField "Nome" "ti-user" $
+            input_ [type_ "text", name_ "name", requiredAttr, autofocusAttr,
+                    class_ authInputCls, placeholder_ "Como te chamamos?"]
+          authField "E-mail" "ti-mail" $
+            input_ [type_ "email", name_ "email", requiredAttr,
+                    class_ authInputCls, placeholder_ "voce@email.com"]
+          authField "Senha" "ti-lock" $
+            input_ [type_ "password", name_ "password", requiredAttr, minlenAttr "6",
+                    class_ authInputCls, placeholder_ "Ao menos 6 caracteres"]
+          authSubmit "Criar conta"
+        authTrust
+        authSwap "Já tem uma conta?" "Entrar" "/login"
+
+authMobileLogo :: Html ()
+authMobileLogo =
+  a_ [href_ "/", class_ "lg:hidden flex items-center gap-2 text-[#14361F] font-serif font-semibold text-lg mb-8"] $ do
+    iconSz "ti-leaf" "text-xl text-[#B98A2E]"
+    span_ "PlantDiary"
+
+authKicker :: Text -> Html ()
+authKicker t =
+  p_ [class_ "flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] font-semibold text-[#B98A2E] mb-3"] $ do
+    span_ "——"
+    toHtml t
+
+authError :: Text -> Html ()
+authError msg =
+  div_ [class_ "flex items-center gap-2 bg-[#F4E3DE] text-[#A23B2A] border border-[#E6C7BF] rounded-lg px-3.5 py-2.5 text-sm mb-4"] $ do
+    iconSz "ti-alert-circle" "text-base flex-shrink-0"
+    toHtml msg
+
+authField :: Text -> Text -> Html () -> Html ()
+authField label iconName inner =
+  div_ $ do
+    label_ [class_ "block text-sm font-medium text-[#3D3A33] mb-1.5"] $ toHtml label
+    div_ [class_ "relative"] $ do
+      div_ [class_ "absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A9A294]"] $
+        iconSz iconName "text-base"
+      inner
+
+authInputCls :: Text
+authInputCls = "w-full rounded-lg border border-[#E7E1D3] bg-white pl-10 pr-4 py-3 text-sm text-[#3D3A33] placeholder-[#A9A294]"
+
+authSubmit :: Text -> Html ()
+authSubmit label =
+  button_ [type_ "submit", class_ "w-full btn bg-[#14361F] hover:bg-[#1E5B38] text-[#FBF9F4] font-medium py-3 rounded-lg flex items-center justify-center gap-2 mt-2"] $ do
+    toHtml label
+    iconSz "ti-arrow-right" "text-base"
+
+authTrust :: Html ()
+authTrust =
+  p_ [class_ "flex items-center justify-center gap-1.5 text-[11px] text-[#A9A294] mt-5"] $ do
+    iconSz "ti-shield-check" "text-sm"
+    span_ "Sua senha é protegida com criptografia."
+
+authSwap :: Text -> Text -> Text -> Html ()
+authSwap prompt linkText href = do
+  div_ [class_ "gold-thread my-6"] emptyHtml
+  p_ [class_ "text-center text-sm text-[#7A746A]"] $ do
+    toHtml prompt
+    " "
+    a_ [href_ href, class_ "text-[#14361F] font-medium underline decoration-[#B98A2E] underline-offset-2 hover:text-[#1E5B38]"] $
+      toHtml linkText
 
 -- ─── Dashboard ──────────────────────────────────────────────────────────────
 
@@ -123,9 +325,9 @@ dashboardView :: Day -> [(Entity Plant, Maybe Day)] -> [Entity CareLog] -> Html 
 dashboardView today plants logs = do
   let needWater = filter (needsAttention today) plants
   div_ [class_ "mb-10 fade-up"] $ do
-    p_ [class_ "text-emerald-700 font-semibold mb-2 text-xs uppercase tracking-widest"] "Painel"
-    h1_ [class_ "font-serif text-3xl sm:text-4xl font-semibold text-stone-800 mb-3 leading-tight"] "Visão geral do jardim"
-    p_ [class_ "text-stone-500 text-base max-w-xl"] "Acompanhe o crescimento e os cuidados das suas plantas."
+    p_ [class_ "flex items-center gap-2 text-[#B98A2E] font-semibold mb-2 text-xs uppercase tracking-[0.18em]"] "Painel"
+    h1_ [class_ "font-serif text-3xl sm:text-4xl font-semibold text-[#14361F] mb-3 leading-tight"] "Visão geral do jardim"
+    p_ [class_ "text-[#7A746A] text-base max-w-xl"] "Acompanhe o crescimento e os cuidados das suas plantas."
 
   div_ [class_ "grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8 fade-up"] $ do
     statCard "ti-plant-2"   (tpack $ show $ length plants)    "plantas cadastradas" "emerald"
@@ -155,10 +357,10 @@ dashboardView today plants logs = do
     div_ [class_ "lg:col-span-2"] $ do
       sectionTitle "Suas Plantas"
       if null plants
-        then div_ [class_ "bg-white/90 backdrop-blur rounded-xl border border-stone-200 p-8 text-center"] $ do
+        then div_ [class_ "bg-white/90 backdrop-blur rounded-xl border border-[#E7E1D3] p-8 text-center"] $ do
                iconSz "ti-plant-2" "text-4xl text-stone-300 mb-3"
-               p_ [class_ "text-stone-500 mb-5 text-sm"] "Você ainda não tem plantas cadastradas."
-               a_ [href_ "/plantas/nova", class_ "btn inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg text-sm font-medium"] $ do
+               p_ [class_ "text-[#7A746A] mb-5 text-sm"] "Você ainda não tem plantas cadastradas."
+               a_ [href_ "/plantas/nova", class_ "btn inline-flex items-center gap-1.5 bg-[#14361F] hover:bg-[#1E5B38] text-[#FBF9F4] px-5 py-2.5 rounded-lg text-sm font-medium"] $ do
                  icon "ti-plus"
                  span_ "Cadastrar primeira planta"
         else div_ [class_ "space-y-2.5"] $ mapM_ (quickPlantRow today) (take 6 plants)
@@ -168,8 +370,8 @@ dashboardView today plants logs = do
 plantListView :: Day -> [(Entity Plant, Maybe Day)] -> Html ()
 plantListView today plants = do
   div_ [class_ "flex flex-wrap items-center justify-between gap-4 mb-6 fade-up"] $ do
-    h1_ [class_ "font-serif text-3xl sm:text-4xl font-semibold text-stone-800"] "Minhas Plantas"
-    a_ [href_ "/plantas/nova", class_ "btn flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap"] $ do
+    h1_ [class_ "font-serif text-3xl sm:text-4xl font-semibold text-[#14361F]"] "Minhas Plantas"
+    a_ [href_ "/plantas/nova", class_ "btn flex items-center gap-1.5 bg-[#14361F] hover:bg-[#1E5B38] text-[#FBF9F4] px-4 py-2.5 rounded-lg text-sm font-medium whitespace-nowrap"] $ do
       icon "ti-plus"
       span_ "Nova Planta"
 
@@ -179,13 +381,13 @@ plantListView today plants = do
     else do
       -- Busca instantânea (client-side)
       div_ [class_ "relative mb-6 fade-up"] $ do
-        div_ [class_ "absolute left-3.5 top-1/2 -translate-y-1/2 text-stone-400"] $
+        div_ [class_ "absolute left-3.5 top-1/2 -translate-y-1/2 text-[#A9A294]"] $
           icon "ti-search"
         input_ [ type_ "text", id_ "plant-search"
                , placeholder_ "Buscar por nome, espécie ou local..."
-               , class_ "w-full rounded-lg border border-stone-200 bg-white/90 backdrop-blur pl-10 pr-4 py-2.5 text-sm text-stone-800 placeholder-stone-400"
+               , class_ "w-full rounded-lg border border-[#E7E1D3] bg-white/90 backdrop-blur pl-10 pr-4 py-2.5 text-sm text-[#14361F] placeholder-stone-400"
                , makeAttribute "oninput" "filterPlants(this.value)" ]
-      p_ [id_ "no-results", class_ "hidden text-center text-stone-400 text-sm py-10"] "Nenhuma planta encontrada para a busca."
+      p_ [id_ "no-results", class_ "hidden text-center text-[#A9A294] text-sm py-10"] "Nenhuma planta encontrada para a busca."
       div_ [id_ "plant-grid", class_ "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6"] $
         mapM_ (plantCard today) plants
       script_ searchScript
@@ -215,16 +417,16 @@ plantDetailView today (Entity pid plant) logs = do
                     (Entity _ l : _) -> Just (careLogDate l)
                     []               -> Nothing
 
-  div_ [class_ "bg-white/90 backdrop-blur rounded-xl border border-stone-200 overflow-hidden mb-8 fade-up"] $ do
-    div_ [class_ "h-2 bg-gradient-to-r from-emerald-600 via-emerald-500 to-sky-500"] emptyHtml
+  div_ [class_ "bg-white/90 backdrop-blur rounded-xl border border-[#E7E1D3] overflow-hidden mb-8 fade-up"] $ do
+    div_ [class_ "gold-thread"] emptyHtml
     div_ [class_ "p-5 sm:p-7"] $ do
       div_ [class_ "flex flex-wrap items-start justify-between gap-4"] $ do
         div_ [class_ "flex items-start gap-4"] $ do
           div_ [class_ "icon-circle w-14 h-14 bg-emerald-50 text-emerald-600 text-2xl"] $
             icon (plantIcon (plantLocation plant))
           div_ $ do
-            h1_ [class_ "font-serif text-2xl sm:text-3xl font-semibold text-stone-800"] $ toHtml $ plantName plant
-            mapM_ (\sp -> p_ [class_ "text-stone-500 italic mt-0.5"] $ toHtml sp) (plantSpecies plant)
+            h1_ [class_ "font-serif text-2xl sm:text-3xl font-semibold text-[#14361F]"] $ toHtml $ plantName plant
+            mapM_ (\sp -> p_ [class_ "text-[#7A746A] italic mt-0.5"] $ toHtml sp) (plantSpecies plant)
         div_ [class_ "flex gap-2 mt-1"] $ do
           actionBtn (pidUrl pid <> "/editar") "ti-edit" "Editar" "bg-stone-100 hover:bg-stone-200 text-stone-700"
           deleteBtn (pidUrl pid <> "/excluir") "ti-trash" "Excluir"
@@ -241,14 +443,14 @@ plantDetailView today (Entity pid plant) logs = do
     div_ [class_ "lg:col-span-2"] $ do
       vitalityShowcase waterings
       sectionTitle "Registrar Cuidado"
-      div_ [class_ "bg-white/90 backdrop-blur rounded-xl border border-stone-200 p-5 sm:p-6"] $
+      div_ [class_ "bg-white/90 backdrop-blur rounded-xl border border-[#E7E1D3] p-5 sm:p-6"] $
         form_ [action_ (pidUrl pid <> "/registros"), method_ "post"] $ do
           formField "Data" $
             input_ [type_ "date", name_ "date", class_ inputCls]
           formField "Tipo de Cuidado" careTypeToggle
           formField "Observações (opcional)" $
             textarea_ [name_ "notes", rows_ "3", class_ inputCls, placeholder_ "Como a planta está?"] ""
-          button_ [type_ "submit", class_ "w-full btn bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 rounded-lg mt-2"] "Registrar cuidado"
+          button_ [type_ "submit", class_ "w-full btn bg-[#14361F] hover:bg-[#1E5B38] text-[#FBF9F4] font-medium py-3 rounded-lg mt-2"] "Registrar cuidado"
       gardenerTip
 
     div_ [class_ "lg:col-span-3"] $ do
@@ -277,12 +479,12 @@ plantFormView mPlant = do
       submitText = if isEdit then "Salvar Alterações" else "Cadastrar Planta"
 
   div_ [class_ "max-w-xl mx-auto fade-up"] $ do
-    h1_ [class_ "font-serif text-3xl sm:text-4xl font-semibold text-stone-800 mb-2"] $ toHtml titleText
-    p_ [class_ "text-stone-500 mb-8"] $
+    h1_ [class_ "font-serif text-3xl sm:text-4xl font-semibold text-[#14361F] mb-2"] $ toHtml titleText
+    p_ [class_ "text-[#7A746A] mb-8"] $
       if isEdit then "Atualize as informações da sua planta."
                 else "Preencha os dados para cadastrar uma nova planta."
 
-    div_ [class_ "bg-white/90 backdrop-blur rounded-xl border border-stone-200 p-5 sm:p-7"] $
+    div_ [class_ "bg-white/90 backdrop-blur rounded-xl border border-[#E7E1D3] p-5 sm:p-7"] $
       form_ [action_ formUrl, method_ "post", class_ "space-y-5"] $ do
         div_ [class_ "grid grid-cols-1 sm:grid-cols-2 gap-5"] $ do
           formField "Nome da Planta" $
@@ -310,7 +512,7 @@ plantFormView mPlant = do
                      placeholder_ "Características especiais, origem, dicas..."]
             $ toHtml $ fromMaybe "" (plant >>= plantNotes)
         div_ [class_ "flex gap-3 pt-2"] $ do
-          button_ [type_ "submit", class_ "flex-1 btn bg-emerald-600 hover:bg-emerald-500 text-white font-medium py-3 rounded-lg"] $
+          button_ [type_ "submit", class_ "flex-1 btn bg-[#14361F] hover:bg-[#1E5B38] text-[#FBF9F4] font-medium py-3 rounded-lg"] $
             toHtml submitText
           a_ [href_ "/plantas", class_ "btn flex-1 text-center bg-stone-100 hover:bg-stone-200 text-stone-700 font-medium py-3 rounded-lg"] "Cancelar"
 
@@ -321,8 +523,8 @@ errorView msg =
   div_ [class_ "max-w-md mx-auto text-center py-20 fade-up"] $ do
     iconSz "ti-alert-triangle" "text-5xl text-stone-300 mb-4"
     h1_ [class_ "font-serif text-2xl font-semibold text-stone-700 mb-2"] "Algo não foi encontrado"
-    p_ [class_ "text-stone-500 mb-6"] $ toHtml msg
-    a_ [href_ "/", class_ "btn inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-medium"] $ do
+    p_ [class_ "text-[#7A746A] mb-6"] $ toHtml msg
+    a_ [href_ "/", class_ "btn inline-flex items-center gap-1.5 bg-[#14361F] hover:bg-[#1E5B38] text-[#FBF9F4] px-5 py-2.5 rounded-lg font-medium"] $ do
       icon "ti-arrow-left"
       span_ "Voltar ao início"
 
@@ -332,24 +534,27 @@ wateringLimitView :: Int64 -> Html ()
 wateringLimitView pid =
   div_ [class_ "max-w-lg mx-auto py-10 fade-up"] $
     div_ [class_ "bg-white/90 backdrop-blur rounded-xl border border-sky-200 overflow-hidden"] $ do
-      div_ [class_ "h-2 bg-gradient-to-r from-sky-500 to-emerald-500"] emptyHtml
+      div_ [class_ "gold-thread"] emptyHtml
       div_ [class_ "p-7 text-center"] $ do
         div_ [class_ "icon-circle w-16 h-16 bg-sky-50 text-sky-600 text-3xl mx-auto mb-4"] $
           icon "ti-droplet-off"
-        h1_ [class_ "font-serif text-2xl font-semibold text-stone-800 mb-3"] "Esta planta já foi regada hoje"
+        h1_ [class_ "font-serif text-2xl font-semibold text-[#14361F] mb-3"] "Esta planta já foi regada hoje"
         p_ [class_ "text-stone-600 text-sm leading-relaxed mb-2"] $ do
           "O excesso de água é a "
           strong_ [class_ "font-semibold text-stone-700"] "principal causa de morte"
           " de plantas de interior: encharcar o substrato expulsa o oxigênio das raízes e favorece o apodrecimento (root rot) e fungos."
-        p_ [class_ "text-stone-500 text-sm leading-relaxed mb-6"] $ do
+        p_ [class_ "text-[#7A746A] text-sm leading-relaxed mb-6"] $ do
           icon "ti-bulb"
           " A maioria das espécies só deve ser regada quando os 2–3 cm superiores do substrato estiverem secos ao toque — geralmente a cada poucos dias, nunca mais de uma vez por dia."
-        a_ [href_ ("/plantas/" <> tshow pid), class_ "btn inline-flex items-center gap-1.5 bg-emerald-600 hover:bg-emerald-500 text-white px-5 py-2.5 rounded-lg font-medium"] $ do
+        a_ [href_ ("/plantas/" <> tshow pid), class_ "btn inline-flex items-center gap-1.5 bg-[#14361F] hover:bg-[#1E5B38] text-[#FBF9F4] px-5 py-2.5 rounded-lg font-medium"] $ do
           icon "ti-arrow-left"
           span_ "Voltar para a planta"
 
 -- ─── Vitality meter (icon grows with consistent watering) ──────────────────
 
+-- Decide o estágio de vitalidade conforme o número de regas (w).
+-- Quanto mais cuidados, maior o estágio e o ícone. Devolve:
+-- (ícone, nome do estágio, tamanho do ícone, quantas regas faltam p/ o próximo).
 vitalityStage :: Int -> (Text, Text, Text, Maybe Int)
 vitalityStage w
   | w >= 15   = ("ti-tree",    "Exuberante",     "text-7xl", Nothing)
@@ -362,20 +567,22 @@ vitalityShowcase :: Int -> Html ()
 vitalityShowcase w = do
   let (ic, label, sizeCls, next) = vitalityStage w
       pct = min 100 (w * 100 `div` 15)
-      ringStyle = "background: conic-gradient(#10b981 " <> tshow pct <> "%, #e2e8f0 0);"
-  div_ [class_ "bg-gradient-to-br from-emerald-50 via-white to-sky-50 rounded-xl border border-stone-200 p-6 mb-6 text-center"] $ do
-    p_ [class_ "text-xs uppercase tracking-widest text-emerald-700 font-semibold mb-4"] "Vitalidade da planta"
-    div_ [class_ "inline-flex items-center justify-center rounded-full p-2 mb-4", style_ ringStyle] $
-      div_ [class_ "rounded-full bg-white flex items-center justify-center", style_ "width:8.5rem;height:8.5rem;"] $
-        iconSz ic (sizeCls <> " text-emerald-600")
-    h3_ [class_ "font-serif text-xl font-semibold text-stone-800"] $ toHtml label
-    p_ [class_ "text-stone-500 text-sm mt-1"] $
+      ringStyle = "background: conic-gradient(#1E5B38 " <> tshow pct <> "%, #E7E1D3 0);"
+  div_ [class_ "bg-[#14361F] rounded-xl border border-[#B98A2E]/30 p-6 mb-6 text-center"] $ do
+    p_ [class_ "flex items-center justify-center gap-2 text-xs uppercase tracking-[0.18em] text-[#E7C77A] font-semibold mb-4"] $ do
+      span_ "——"
+      span_ "Vitalidade da planta"
+    div_ [class_ "inline-flex items-center justify-center rounded-full p-1.5 mb-4 ring-1 ring-[#B98A2E]/50", style_ ringStyle] $
+      div_ [class_ "rounded-full bg-[#FBF9F4] flex items-center justify-center", style_ "width:8.5rem;height:8.5rem;"] $
+        iconSz ic (sizeCls <> " text-[#1E5B38]")
+    h3_ [class_ "font-serif text-xl font-semibold text-[#FBF9F4]"] $ toHtml label
+    p_ [class_ "text-[#FBF9F4]/60 text-sm mt-1"] $
       toHtml (tshow w <> (if w == 1 then " rega registrada" else " regas registradas"))
     case next of
-      Just n  -> p_ [class_ "inline-flex items-center gap-1.5 text-emerald-700 text-xs mt-3 font-medium bg-emerald-50 px-3 py-1 rounded-full"] $ do
+      Just n  -> p_ [class_ "inline-flex items-center gap-1.5 text-[#E7C77A] text-xs mt-3 font-medium bg-[#B98A2E]/15 px-3 py-1 rounded-full"] $ do
                    iconSz "ti-arrow-up-right" "text-sm"
                    toHtml ("Faltam " <> tshow n <> (if n == 1 then " rega" else " regas") <> " para o próximo estágio")
-      Nothing -> p_ [class_ "inline-flex items-center gap-1.5 text-teal-700 text-xs mt-3 font-medium bg-teal-50 px-3 py-1 rounded-full"] $ do
+      Nothing -> p_ [class_ "inline-flex items-center gap-1.5 text-[#E7C77A] text-xs mt-3 font-medium bg-[#B98A2E]/15 px-3 py-1 rounded-full"] $ do
                    iconSz "ti-award" "text-sm"
                    "Estágio máximo alcançado"
 
@@ -392,15 +599,18 @@ gardenerTip =
 
 data WaterStatus = NoSchedule | NeverWatered | Overdue Int | DueToday | Upcoming Int
 
+-- Calcula a situação da rega de uma planta. A conta é simples:
+-- pega a data da última rega, soma o intervalo (ex.: +7 dias) e compara
+-- com a data de hoje. Se a data prevista já passou, está atrasada.
 waterStatus :: Day -> Maybe Int -> Maybe Day -> WaterStatus
-waterStatus _ Nothing _              = NoSchedule
-waterStatus _ (Just _) Nothing       = NeverWatered
+waterStatus _ Nothing _              = NoSchedule    -- sem agenda definida
+waterStatus _ (Just _) Nothing       = NeverWatered  -- tem agenda, mas nunca regada
 waterStatus today (Just iv) (Just w) =
-  let nextDue = addDays (fromIntegral iv) w
-      d       = diffDays nextDue today
-  in if d < 0        then Overdue (fromInteger (negate d))
-     else if d == 0  then DueToday
-     else                 Upcoming (fromInteger d)
+  let nextDue = addDays (fromIntegral iv) w  -- data prevista da próxima rega
+      d       = diffDays nextDue today        -- dias entre hoje e a data prevista
+  in if d < 0        then Overdue (fromInteger (negate d))  -- já passou: atrasada
+     else if d == 0  then DueToday                          -- é hoje
+     else                 Upcoming (fromInteger d)          -- ainda falta
 
 needsAttention :: Day -> (Entity Plant, Maybe Day) -> Bool
 needsAttention today (Entity _ p, lastW) =
@@ -412,7 +622,7 @@ needsAttention today (Entity _ p, lastW) =
 
 waterStatusBadge :: WaterStatus -> Html ()
 waterStatusBadge st = case st of
-  NoSchedule   -> badge "ti-droplet-off"     "Sem agenda"                       "bg-stone-100 text-stone-500"
+  NoSchedule   -> badge "ti-droplet-off"     "Sem agenda"                       "bg-stone-100 text-[#7A746A]"
   NeverWatered -> badge "ti-droplet"         "Regar agora"                      "bg-amber-50 text-amber-700"
   Overdue n    -> badge "ti-alert-triangle"  ("Atrasada " <> tshow n <> "d")    "bg-red-50 text-red-600"
   DueToday     -> badge "ti-droplet"         "Regar hoje"                       "bg-amber-50 text-amber-700"
@@ -442,7 +652,7 @@ waterStatusText st = case st of
                     toHtml ("Rega atrasada há " <> tshow n <> (if n == 1 then " dia" else " dias"))
   DueToday     -> span_ [class_ "text-amber-700 font-medium"] "Regar hoje"
   NeverWatered -> span_ [class_ "text-amber-700 font-medium"] "Ainda não foi regada"
-  _            -> span_ [class_ "text-stone-400"] "Em dia"
+  _            -> span_ [class_ "text-[#A9A294]"] "Em dia"
 
 -- ─── Garden statistics ──────────────────────────────────────────────────────
 
@@ -458,9 +668,9 @@ statsView plants logs = do
       topPlants  = take 5 $ sortOn (Down . snd) $ filter ((> 0) . snd) counts
 
   div_ [class_ "mb-10 fade-up"] $ do
-    p_ [class_ "text-emerald-700 font-semibold mb-2 text-xs uppercase tracking-widest"] "Insights"
-    h1_ [class_ "font-serif text-3xl sm:text-4xl font-semibold text-stone-800 mb-3 leading-tight"] "Estatísticas do jardim"
-    p_ [class_ "text-stone-500 text-base max-w-xl"] "Um panorama de como você tem cuidado das suas plantas."
+    p_ [class_ "flex items-center gap-2 text-[#B98A2E] font-semibold mb-2 text-xs uppercase tracking-[0.18em]"] "Insights"
+    h1_ [class_ "font-serif text-3xl sm:text-4xl font-semibold text-[#14361F] mb-3 leading-tight"] "Estatísticas do jardim"
+    p_ [class_ "text-[#7A746A] text-base max-w-xl"] "Um panorama de como você tem cuidado das suas plantas."
 
   div_ [class_ "grid grid-cols-2 lg:grid-cols-4 gap-4 mb-10 fade-up"] $ do
     statCard "ti-plant-2"        (tpack $ show $ length plants) "plantas"        "emerald"
@@ -471,16 +681,16 @@ statsView plants logs = do
   div_ [class_ "grid grid-cols-1 lg:grid-cols-2 gap-8"] $ do
     div_ $ do
       sectionTitle "Cuidados por tipo"
-      div_ [class_ "bg-white/90 backdrop-blur rounded-xl border border-stone-200 p-5 space-y-3"] $
+      div_ [class_ "bg-white/90 backdrop-blur rounded-xl border border-[#E7E1D3] p-5 space-y-3"] $
         if total == 0
-          then p_ [class_ "text-stone-400 text-sm text-center py-6"] "Nenhum cuidado registrado ainda."
+          then p_ [class_ "text-[#A9A294] text-sm text-center py-6"] "Nenhum cuidado registrado ainda."
           else mapM_ (statBar maxC) rows
 
     div_ $ do
       sectionTitle "Plantas mais cuidadas"
-      div_ [class_ "bg-white/90 backdrop-blur rounded-xl border border-stone-200 p-5"] $
+      div_ [class_ "bg-white/90 backdrop-blur rounded-xl border border-[#E7E1D3] p-5"] $
         if null topPlants
-          then p_ [class_ "text-stone-400 text-sm text-center py-6"] "Nenhum cuidado registrado ainda."
+          then p_ [class_ "text-[#A9A294] text-sm text-center py-6"] "Nenhum cuidado registrado ainda."
           else div_ [class_ "space-y-3"] $ mapM_ rankRow (zip [1 :: Int ..] topPlants)
 
 statBar :: Int -> (Text, Text, Int) -> Html ()
@@ -491,7 +701,7 @@ statBar maxC (label, ic, c) = do
       span_ [class_ "flex items-center gap-1.5 text-stone-600 font-medium"] $ do
         iconSz ic "text-base text-emerald-600"
         toHtml label
-      span_ [class_ "text-stone-400 text-xs"] $ toHtml (tshow c)
+      span_ [class_ "text-[#A9A294] text-xs"] $ toHtml (tshow c)
     div_ [class_ "h-2 bg-stone-100 rounded-full overflow-hidden"] $
       div_ [class_ "h-full bg-gradient-to-r from-emerald-500 to-sky-500 rounded-full", style_ ("width:" <> tshow pct <> "%;")] emptyHtml
 
@@ -500,7 +710,7 @@ rankRow (pos, (name, c)) =
   div_ [class_ "flex items-center gap-3"] $ do
     div_ [class_ "icon-circle w-8 h-8 bg-emerald-50 text-emerald-700 text-sm font-semibold"] $ toHtml (tshow pos)
     span_ [class_ "flex-1 min-w-0 truncate font-medium text-stone-700 text-sm"] $ toHtml name
-    span_ [class_ "text-stone-400 text-xs"] $ toHtml (tshow c <> (if c == 1 then " cuidado" else " cuidados"))
+    span_ [class_ "text-[#A9A294] text-xs"] $ toHtml (tshow c <> (if c == 1 then " cuidado" else " cuidados"))
 
 distinctLocations :: [Entity Plant] -> Int
 distinctLocations = length . dedupe . map (T.toLower . plantLocation . entityVal)
@@ -510,21 +720,21 @@ distinctLocations = length . dedupe . map (T.toLower . plantLocation . entityVal
 
 plantCard :: Day -> (Entity Plant, Maybe Day) -> Html ()
 plantCard today (Entity pid plant, lastW) =
-  div_ [ class_ "card bg-white/90 backdrop-blur rounded-xl border border-stone-200 overflow-hidden"
+  div_ [ class_ "card bg-white/90 backdrop-blur rounded-xl border border-[#E7E1D3] overflow-hidden"
        , makeAttribute "data-search" (searchKey plant) ] $ do
-    div_ [class_ "h-1.5 bg-gradient-to-r from-emerald-600 to-sky-500"] emptyHtml
+    div_ [class_ "gold-thread"] emptyHtml
     div_ [class_ "p-5"] $ do
       div_ [class_ "flex items-start gap-3 mb-3"] $ do
         div_ [class_ "icon-circle w-11 h-11 bg-emerald-50 text-emerald-600 text-lg"] $
           icon (plantIcon (plantLocation plant))
         div_ $ do
-          h3_ [class_ "font-serif text-lg font-semibold text-stone-800 leading-tight"] $ toHtml $ plantName plant
-          mapM_ (\sp -> p_ [class_ "text-stone-400 italic text-sm"] $ toHtml sp) (plantSpecies plant)
+          h3_ [class_ "font-serif text-lg font-semibold text-[#14361F] leading-tight"] $ toHtml $ plantName plant
+          mapM_ (\sp -> p_ [class_ "text-[#A9A294] italic text-sm"] $ toHtml sp) (plantSpecies plant)
       div_ [class_ "flex flex-wrap gap-2 mb-4"] $ do
-        badge "ti-map-pin" (plantLocation plant) "bg-stone-100 text-stone-500"
+        badge "ti-map-pin" (plantLocation plant) "bg-stone-100 text-[#7A746A]"
         growthBadge (plantHeightCm plant)
         waterStatusBadge (waterStatus today (plantWaterIntervalDays plant) lastW)
-      a_ [href_ (pidUrl pid), class_ "btn flex items-center justify-center gap-1.5 bg-stone-900 hover:bg-stone-800 text-white rounded-lg py-2.5 text-sm font-medium"] $ do
+      a_ [href_ (pidUrl pid), class_ "btn flex items-center justify-center gap-1.5 bg-[#14361F] hover:bg-[#1E5B38] text-[#FBF9F4] rounded-lg py-2.5 text-sm font-medium"] $ do
         span_ "Ver detalhes"
         iconSz "ti-arrow-right" "text-base"
 
@@ -534,44 +744,44 @@ searchKey p = T.toLower $ T.intercalate " "
 
 statCard :: Text -> Text -> Text -> Text -> Html ()
 statCard iconName valueText label color =
-  div_ [class_ "bg-white/90 backdrop-blur border border-stone-200 rounded-xl p-5 flex items-center gap-4"] $ do
+  div_ [class_ "bg-white/90 backdrop-blur border border-[#E7E1D3] rounded-xl p-5 flex items-center gap-4"] $ do
     div_ [class_ $ "icon-circle w-12 h-12 text-xl " <> colorBg color <> " " <> colorText color] $
       icon iconName
     div_ $ do
-      p_ [class_ "text-xl sm:text-2xl font-semibold font-serif text-stone-800"] $ toHtml valueText
-      p_ [class_ "text-stone-500 text-xs sm:text-sm"] $ toHtml label
+      p_ [class_ "text-xl sm:text-2xl font-semibold font-serif text-[#14361F]"] $ toHtml valueText
+      p_ [class_ "text-[#7A746A] text-xs sm:text-sm"] $ toHtml label
 
 careLogItem :: Int64 -> Entity CareLog -> Html ()
 careLogItem pid (Entity lid log_) =
   div_ [class_ "relative flex gap-4 pb-2"] $ do
     div_ [class_ $ "icon-circle w-10 h-10 text-lg ring-4 ring-stone-50 " <> careTypeBg (careLogCareType log_) <> " " <> careTypeColor (careLogCareType log_)] $
       icon (careTypeIcon (careLogCareType log_))
-    div_ [class_ "bg-white rounded-lg p-4 flex-1 border border-stone-200"] $ do
+    div_ [class_ "bg-white rounded-lg p-4 flex-1 border border-[#E7E1D3]"] $ do
       div_ [class_ "flex items-center justify-between gap-2 flex-wrap"] $ do
         span_ [class_ "font-medium text-stone-700"] $ toHtml $ careTypeLabel (careLogCareType log_)
-        span_ [class_ "text-stone-400 text-sm"] $ toHtml $ fmtDay (careLogDate log_)
-      mapM_ (\n -> p_ [class_ "text-stone-500 text-sm mt-1"] $ toHtml n)
+        span_ [class_ "text-[#A9A294] text-sm"] $ toHtml $ fmtDay (careLogDate log_)
+      mapM_ (\n -> p_ [class_ "text-[#7A746A] text-sm mt-1"] $ toHtml n)
             (careLogNotes log_)
       form_ [action_ ("/plantas/" <> tshow pid <> "/registros/" <> tshow (fromSqlKey lid) <> "/excluir"), method_ "post", class_ "mt-2"] $
         button_ [type_ "submit", class_ "text-xs text-stone-300 hover:text-red-500 link-fade"] "remover"
 
 miniLogCard :: Entity CareLog -> Html ()
 miniLogCard (Entity _ log_) =
-  div_ [class_ "flex items-center gap-3 bg-white/90 backdrop-blur rounded-lg border border-stone-200 p-3.5"] $ do
+  div_ [class_ "flex items-center gap-3 bg-white/90 backdrop-blur rounded-lg border border-[#E7E1D3] p-3.5"] $ do
     div_ [class_ $ "icon-circle w-9 h-9 text-base " <> careTypeBg (careLogCareType log_) <> " " <> careTypeColor (careLogCareType log_)] $
       icon (careTypeIcon (careLogCareType log_))
     div_ [class_ "flex-1 min-w-0"] $ do
       p_ [class_ "font-medium text-stone-700 text-sm truncate"] $ toHtml $ careTypeLabel (careLogCareType log_)
-      p_ [class_ "text-stone-400 text-xs"] $ toHtml $ fmtDay (careLogDate log_)
+      p_ [class_ "text-[#A9A294] text-xs"] $ toHtml $ fmtDay (careLogDate log_)
 
 quickPlantRow :: Day -> (Entity Plant, Maybe Day) -> Html ()
 quickPlantRow today (Entity pid plant, lastW) =
-  a_ [href_ (pidUrl pid), class_ "flex items-center gap-3 bg-white/90 backdrop-blur rounded-lg border border-stone-200 p-3.5 hover:border-emerald-300 transition-colors group"] $ do
+  a_ [href_ (pidUrl pid), class_ "flex items-center gap-3 bg-white/90 backdrop-blur rounded-lg border border-[#E7E1D3] p-3.5 hover:border-emerald-300 transition-colors group"] $ do
     div_ [class_ "icon-circle w-10 h-10 bg-emerald-50 text-emerald-600 text-base"] $
       icon (plantIcon (plantLocation plant))
     div_ [class_ "flex-1 min-w-0"] $ do
       p_ [class_ "font-medium text-stone-700 text-sm truncate group-hover:text-emerald-700 transition-colors"] $ toHtml $ plantName plant
-      p_ [class_ "text-stone-400 text-xs italic truncate"] $ toHtml $ fromMaybe "Espécie não informada" (plantSpecies plant)
+      p_ [class_ "text-[#A9A294] text-xs italic truncate"] $ toHtml $ fromMaybe "Espécie não informada" (plantSpecies plant)
     waterStatusDot (waterStatus today (plantWaterIntervalDays plant) lastW)
 
 -- ─── Care type toggle (responsive button grid, no JS) ──────────────────────
@@ -598,7 +808,7 @@ careTypeToggle =
         input_ $
           [type_ "radio", name_ "care_type", value_ v, class_ "toggle-input sr-only"]
           ++ [checkedAttr | i == 0]
-        div_ [class_ "toggle-box flex flex-col items-center justify-center gap-1 px-1 py-3 rounded-xl border border-stone-200 bg-white text-stone-500 hover:border-emerald-300 hover:text-emerald-600 text-center select-none"] $ do
+        div_ [class_ "toggle-box flex flex-col items-center justify-center gap-1 px-1 py-3 rounded-xl border border-[#E7E1D3] bg-white text-[#7A746A] hover:border-emerald-300 hover:text-emerald-600 text-center select-none"] $ do
           iconSz ic "text-xl"
           span_ [class_ "text-[11px] font-medium leading-tight"] $ toHtml label
 
@@ -612,7 +822,7 @@ growthBadge h =
        toHtml label
 
 growthStage :: Maybe Double -> (Text, Text, Text, Text)
-growthStage Nothing = ("ti-ruler-2", "Altura não registrada", "bg-stone-100", "text-stone-500")
+growthStage Nothing = ("ti-ruler-2", "Altura não registrada", "bg-stone-100", "text-[#7A746A]")
 growthStage (Just h)
   | h < 15    = ("ti-seeding",  "Muda · "             <> fmtHeight h, "bg-lime-50",    "text-lime-700")
   | h < 50    = ("ti-plant-2",  "Em crescimento · "   <> fmtHeight h, "bg-emerald-50", "text-emerald-700")
@@ -628,7 +838,7 @@ emptyState iconName titleText desc =
   div_ [class_ "bg-white/80 backdrop-blur rounded-xl border border-dashed border-stone-300 p-10 text-center"] $ do
     iconSz iconName "text-4xl text-stone-300 mb-3"
     p_ [class_ "font-medium text-stone-600 mb-1"] $ toHtml titleText
-    p_ [class_ "text-stone-400 text-sm"] $ toHtml desc
+    p_ [class_ "text-[#A9A294] text-sm"] $ toHtml desc
 
 badge :: Text -> Text -> Text -> Html ()
 badge iconName txt cls =
@@ -638,7 +848,7 @@ badge iconName txt cls =
 
 sectionTitle :: Text -> Html ()
 sectionTitle t =
-  h2_ [class_ "font-serif text-lg sm:text-xl font-semibold text-stone-700 mb-4"] $ toHtml t
+  h2_ [class_ "font-serif text-lg sm:text-xl font-semibold text-[#14361F] mb-4"] $ toHtml t
 
 formField :: Text -> Html () -> Html ()
 formField labelText fieldInput =
@@ -663,7 +873,7 @@ deleteBtn actionUrl iconName label =
 -- ─── Helpers ────────────────────────────────────────────────────────────────
 
 inputCls :: Text
-inputCls = "w-full rounded-lg border border-stone-200 bg-stone-50 px-4 py-2.5 text-sm text-stone-800 placeholder-stone-400"
+inputCls = "w-full rounded-lg border border-[#E7E1D3] bg-stone-50 px-4 py-2.5 text-sm text-[#14361F] placeholder-stone-400"
 
 pidUrl :: PlantId -> Text
 pidUrl pid = "/plantas/" <> tpack (show $ fromSqlKey pid)

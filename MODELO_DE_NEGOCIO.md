@@ -100,7 +100,8 @@ prosperar ao longo do tempo?".
 | Fase | Entregas | Status |
 |---|---|---|
 | **1 — MVP (atual)** | CRUD de plantas e cuidados, agenda de rega, medidor de vitalidade, estatísticas | ✅ Pronto |
-| **2 — Contas e lembretes** | Login de usuário, notificações por e-mail/push, dados privados por conta | 🔜 Próximo |
+| **2 — Contas de usuário** | Cadastro/login com senha hasheada (PBKDF2), sessões e dados privados por conta | ✅ Pronto |
+| **2b — Lembretes** | Notificações por e-mail/push quando chega a hora de regar | 🔜 Próximo |
 | **3 — Inteligência** | Identificação de espécie e diagnóstico de doenças por foto (IA), biblioteca de espécies com guias | 🔮 Planejado |
 | **4 — Comunidade e marketplace** | Feed social de plantas, recomendações de produtos com afiliados | 🔮 Planejado |
 | **5 — B2B / White-label** | Versão para viveiros e floriculturas, QR code por planta vendida | 🔮 Planejado |

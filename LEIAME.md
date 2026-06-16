@@ -1,7 +1,7 @@
 # 🌿 PlantDiary
 
-Diário digital de plantas com CRUD completo, agenda de rega inteligente e
-acompanhamento de crescimento — feito em **Haskell**.
+Diário digital de plantas com contas de usuário, CRUD completo, agenda de rega
+inteligente e acompanhamento de crescimento — feito em **Haskell**.
 
 > 📈 **Modelo de negócio, estratégia e roadmap:** veja
 > [MODELO_DE_NEGOCIO.md](MODELO_DE_NEGOCIO.md).
@@ -36,6 +36,11 @@ plantdiary/
 ```
 
 ## Funcionalidades
+
+### Contas de usuário
+- **Cadastro e login** com senha protegida por hash PBKDF2 (nunca em texto puro)
+- **Sessões via cookie** — cada pessoa acessa apenas as próprias plantas
+- Cada planta e cada registro pertencem a um usuário específico (dados isolados)
 
 ### CRUD
 - **Plantas** — criar, listar, ver, editar e excluir
