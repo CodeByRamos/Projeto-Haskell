@@ -1,0 +1,20 @@
+services:
+  - type: web
+    name: plantdiary
+    runtime: docker
+    plan: free
+    dockerfilePath: ./Dockerfile
+    envVars:
+      # Caminho do banco. No plano gratuito o disco é efêmero (os dados
+      # reiniciam a cada deploy). Para persistir, use um plano com disco
+      # (descomente o bloco "disk" abaixo) e aponte para /data.
+      - key: DATABASE_PATH
+        value: plantdiary.db
+    healthCheckPath: /
+
+    # ─── Persistência opcional (requer plano pago) ───────────────────────────
+    # disk:
+    #   name: plantdiary-data
+    #   mountPath: /data
+    #   sizeGB: 1
+    # E troque DATABASE_PATH acima para /data/plantdiary.db

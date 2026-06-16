@@ -1,0 +1,28 @@
+cabal-version: 2.4
+name:          plantdiary
+version:       0.1.0.0
+build-type:    Simple
+
+executable plantdiary
+  main-is:          Main.hs
+  hs-source-dirs:   app src
+  other-modules:    Models Routes Views
+  ghc-options:      -Wall -Wno-unused-imports
+  default-language: Haskell2010
+
+  build-depends:
+      base                  >= 4.7  && < 5
+    , scotty                >= 0.20
+    , lucid                 >= 2.9
+    , persistent            >= 2.14
+    , persistent-sqlite     >= 2.13
+    , persistent-template   >= 2.12
+    , text
+    , time
+    , bytestring
+    , http-types
+    , transformers
+    , mtl
+    , monad-logger
+    , resourcet
+    , wai

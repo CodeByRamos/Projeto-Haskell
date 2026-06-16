@@ -1,0 +1,9 @@
+.stack-work/
+dist-newstyle/
+*.db
+*.db-shm
+*.db-wal
+build_log*.txt
+server_log*.txt
+*.hi
+*.o
